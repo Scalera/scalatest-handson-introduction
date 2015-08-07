@@ -381,6 +381,4 @@ fork in Test := true
 
 As you can see, Scalatest is quite a powerful testing framework but, despite of that, you can start working with it only learning a few concepts. The closeness to the user's language makes really easy the use of a wide range of its features.
 
-All used code examples can be found [here](https://github.com/renderedtext/jsantosp-scalatest-handson). 
-
 Thanks to [Semaphore](https://semaphoreci.com/community) and [Scalera](http://scalera.es) staff for making possible this tutorial :-)
