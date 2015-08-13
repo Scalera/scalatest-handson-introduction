@@ -4,6 +4,14 @@
 
 After reading a lot and asking in forums for answers (and programming some years with it), you get a little bit used to the language. But then, you realize that there is a lot stuff that you usually managed unconsciously and you have no idea to handle in a functional way. Such as code testing. In these few lines we’ll see how to deal with it.
 
+## Prerequisites
+
+What will you need before reading futher?
+
+* [sbt 0.13.8](http://www.scala-sbt.org/download.html) or higher installed.
+* small notions about Scala
+* a greedy desire to learn!
+
 ## Our domain code
 
 For shedding light on the main concepts, let’s suppose we have some cool just-implemented Scala classes we want to test. These ones could be classes from a simple snippet that models a Hotel, and the action of checking in:
@@ -234,29 +242,59 @@ it should "your-test-case-description" in { /* your test code */ }
 
 For example, at first test case, we're checking that ```isFree()``` method result is directly related to the existence of a guest that occupies the room. We can also highlight those test cases where we want to catch some exception, like the case where we are trying to register a guest in an already occupied room.
 
-Another cool feature to talk about is that we can avoid testing all test cases. Imagine we want to **ignore** some of them, we don't have to comment all test code, or even the test case code; we can ignore it by replacing the ```it``` word with ```ignore```. For example:
-
-```scala
-//...
-
-class RoomTest extends UnitTest("Room") {
-  
-  ignore should "provide info about its occupation" in {
-    //...
-  }
-
-  it should "allow registering a new guest if room is free" in {
-    //...
-  }
-
-  //...
-```
-
 ## Test it!
 
-Once you have your test classes implemented, you can run your tests by using the SBT task called ```test```. If we launch this right now, we'll have some problems with unimplemented methods (remember that we used ```???``` for leaving them unimplemented).
+Once you have your test classes implemented, you can run your tests by using the SBT task called ```test```. If we launch this right now, we'll have some problems with unimplemented methods (remember that we used ```???``` for leaving them unimplemented). Tests will fail and result output will be like
 
-After having implemented them, if we execute ```test```, this will launch a test discovery in your project, and once finished, it will launch all discovered test classes, showing something similar to:
+```sbt
+> test
+[info] RoomTest:
+[info] Room
+[info] - should provide info about its occupation *** FAILED ***
+[info]   scala.NotImplementedError: an implementation is missing
+[info]   at scala.Predef$.$qmark$qmark$qmark(Predef.scala:252)
+[info]   at org.me.hotel.Room.isFree(Room.scala:6)
+[info]   at org.me.hotel.RoomTest$$anonfun$1.apply$mcV$sp(RoomTest.scala:6)
+[info]   at org.me.hotel.RoomTest$$anonfun$1.apply(RoomTest.scala:5)
+
+...
+
+[info] Run completed in 699 milliseconds.
+[info] Total number of tests run: 15
+[info] Suites: completed 6, aborted 0
+[info] Tests: succeeded 3, failed 12, canceled 0, ignored 0, pending 0
+[info] *** 12 TESTS FAILED ***
+[error] Failed tests:
+[error]   org.me.hotel.RoomTest
+[error]   org.me.hotel.HotelTest
+[error] (test:test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 6 s, completed 12-ago-2015 16:08:47
+```
+
+So, let's implement abstract methods in order to make these test running. ```Room.scala``` file should look like the following:
+
+```scala
+package org.me.hotel
+
+case class Room(number: Int, guest: Option[Guest] = None){ room =>
+
+  def isFree(): Boolean =
+    guest.isEmpty
+
+  def checkin(guest: Guest): Room = {
+    require(room.guest.isEmpty, "Room is occupied")
+    Room(number,Some(guest))
+  }
+
+  def checkout(): Room = {
+    require(guest.isDefined,"Room is already free")
+    Room(number,None)
+  }
+
+}
+```
+
+After having implemented all abstract methods, if we execute ```test``` again, this will launch a test discovery in your project, and once finished, it will launch all discovered test classes, showing something similar to:
 
 ```sbt
 > test
@@ -291,6 +329,26 @@ After having implemented them, if we execute ```test```, this will launch a test
 [info] Tests: succeeded 15, failed 0, canceled 0, ignored 0, pending 0
 [info] All tests passed.
 [success] Total time: 1 s, completed 04-ago-2015 18:23:13
+```
+
+### Ignoring test cases
+
+Another cool feature to talk about is that we can avoid testing all test cases. Imagine we want to **ignore** some of them, we don't have to comment all test code, or even the test case code; we can ignore it by replacing the ```it``` word with ```ignore```. For example:
+
+```scala
+//...
+
+class RoomTest extends UnitTest("Room") {
+  
+  ignore should "provide info about its occupation" in {
+    //...
+  }
+
+  it should "allow registering a new guest if room is free" in {
+    //...
+  }
+
+  //...
 ```
 
 If we ignore some test cases, result view will be like this:
@@ -329,6 +387,8 @@ If we ignore some test cases, result view will be like this:
 [info] All tests passed.
 [success] Total time: 1 s, completed 04-ago-2015 18:23:13
 ```
+
+### Testing an only spec
 
 If we have several test classes and want to test only one of them, we can also use the SBT task ```test-only``` (or ```testOnly``` depending on SBT version).
 
@@ -380,5 +440,7 @@ fork in Test := true
 ## So...
 
 As you can see, Scalatest is quite a powerful testing framework but, despite of that, you can start working with it only learning a few concepts. The closeness to the user's language makes really easy the use of a wide range of its features.
+
+All used code examples can be found [here](https://github.com/Scalera/scalatest-handson-introduction/tree/master/hotel-management). 
 
 Thanks to [Semaphore](https://semaphoreci.com/community) and [Scalera](http://scalera.es) staff for making possible this tutorial :-)
